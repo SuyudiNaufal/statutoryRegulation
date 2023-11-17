@@ -1,0 +1,71 @@
+.bodyContainer{
+    display: flex;
+    width: 100%;
+    height: 100%;
+}
+
+.bodyLeft{
+    width: 35vw;
+    display: flex;
+    border-right: solid 4px black;
+    height: 100%;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.bodyRight{
+    width: 65vw;
+    display: flex;
+}
+
+.bodyLeftTop{
+
+    display: flex;
+    width: 100%;
+    justify-content: flex-start;
+    flex-direction: column;
+}
+
+.bodySearchBar{
+    border-bottom: solid 4px black;
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    padding: 4px;
+}
+
+.bodyLeftBottom{
+    padding: 4px;
+}
+
+.treeNav{
+    display: block;
+    white-space: nowrap;
+    color: black;
+    position: relative;
+}
+
+.treeNav.isExpandable::before{
+    border-left:  1px solid #333;
+    content: "";;
+    height: 100%;
+    position: absolute;
+}
+
+.treeNav>.treeNav{
+    margin-left: 8px;
+}
+
+.treeNav.treeNav.isExpandable[open]>.treeNavTitle::before{
+    transform: rotate(90deg);
+}
+
+.treeNav.treeNav.isExpandable>.treeNavTitle{
+    padding-left: 4px;
+}
+
+
+.treeNavTitle{
+    cursor: pointer;
+    display: block;
+}
