@@ -3,9 +3,27 @@
 import Link from "next/link"
 import styles from "./body.module.css"
 import { useSearchParams } from "next/navigation"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import React from "react"
+import { useState } from "react";
 
 export default function Body() {
+    const [statutories,setStatutories] = useState<any[]>([])
     const searchParam = useSearchParams();
+    const supabase = createClientComponentClient();
+    // ambil statutories
+    async function getStatutories() {
+        const { data: statutories, error } = await supabase
+            .from('statutories')
+            .select('*')
+            if(!statutories){
+                return 
+            }
+        setStatutories(statutories as any) 
+    } 
+    React.useEffect( () =>
+        {getStatutories()},[]
+        ) 
     const bagian = searchParam.get("bagian");
     return (
         <div className={styles.bodyContainer}>
@@ -44,7 +62,9 @@ export default function Body() {
             </div>
             <div className={styles.bodyRight}>
                 <div className={styles.bodyRightTop}>
-                    <h4>Undang-Undang - Undang-Undang Nomor 17 Tahun 2008 - Bab 1 - Bagian 2</h4>
+                    <h4>{
+                        statutories[0]?.statutory_title
+                    }</h4>
                 </div>
                 <div className={styles.bodyRightBottom}>
                     <h1>Bagian 2</h1>
