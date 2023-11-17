@@ -62,10 +62,42 @@
 
 .treeNav.treeNav.isExpandable>.treeNavTitle{
     padding-left: 4px;
+    margin-bottom: 4px;
+
 }
 
 
 .treeNavTitle{
     cursor: pointer;
     display: block;
+}
+
+.treeNavTitleDiv{
+    display: flex;
+    flex-direction: column;
+    padding-left: 12px;
+    gap: 4px;
+
+}
+
+.bodyRight{
+    display: flex;
+    flex-direction: column;
+    ;
+}
+
+.bodyRightTop{
+    border-bottom: solid 2px black;
+    display: flex;
+    width: 100%;
+    padding: 4px;
+}
+
+.bodyRightBottom{
+    margin: 4px;
+    padding-left: 4px;
+    text-align: justify;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.5;
 }
