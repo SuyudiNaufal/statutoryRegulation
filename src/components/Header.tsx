@@ -6,7 +6,7 @@ const Header = () => {
         <div className={styles.headerContainer}>
             <div></div>
             <div className={styles.headerLogo}>
-                <a href="#" className={styles.headerLogoLink}>logo</a>
+                <a href="/" className={styles.headerLogoLink}>Home Page</a>
             </div>
             <div className={styles.headerMenu}>
                 <div className={styles.headerSubMenu}>
