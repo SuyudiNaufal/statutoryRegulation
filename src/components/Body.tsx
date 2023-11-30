@@ -17,9 +17,11 @@ export default function Body() {
     const bagian = searchParam.get("bagian");
     const bab = searchParam.get("bab");
     const peraturan = searchParam.get("peraturan")
+    const judul = searchParam.get("judul")
     const router = useRouter()
+    const searchEngine = searchParam.get("search")
 
-
+    const [searchQuery, setSearchQuery] = useState<string>('')
     // ambil statutories
     async function getStatutories() {
         const { data: statutories, error } = await supabase
@@ -32,9 +34,11 @@ export default function Body() {
                 paragraphs(*)
             )
             `)
+            .order('id', { foreignTable: 'chapters', ascending: true })
         if (!statutories) {
             return
         }
+        
         setStatutories(statutories as any)
     }
     React.useEffect(() => { getStatutories() }, []
@@ -42,6 +46,8 @@ export default function Body() {
     )
     console.log(statutories)
 
+
+    // ambil isi dari bagian
     const [paragraphContent, setParagraphContent] = useState<any[]>([])
     async function getParagraphContent() {
         const { data: paragraphs, error } = await supabase
@@ -59,6 +65,7 @@ export default function Body() {
     }
     React.useEffect(() => { getParagraphContent() }, [bagian])
 
+    // ambil isi dari BAB (Bagian 1, 2 ,dst)
     const [chapterContent, setChapterContent] = useState<any[]>([])
     async function getChapterContent() {
         const { data: chapters, error } = await supabase
@@ -73,64 +80,130 @@ export default function Body() {
     }
     React.useEffect(() => { getChapterContent() }, [peraturan])
 
-    const keduanyaNull = bagian === null && peraturan === null ? true : false;
 
+    // Ambil isi dari Judul Peraturan (Bab 1, 2, dst)
+    const [statutoryContent, setStatutoryContent] = useState<any[]>([])
+    async function getStatutoryContent() {
+        let { data: statutories, error } = await supabase
+            .from('statutories')
+            .select("*")
+            // Filters
+            .eq('slug', judul)
+        if (!statutories) {
+            return
+        }
+        setStatutoryContent(statutories as any)
+    }
+    React.useEffect(() => { getStatutoryContent() }, [judul])
 
+    // Buat konstante untuk welcome sign
+    const ketiganyaNull = judul === null && bagian === null && peraturan === null ? true : false;
+
+    // Ngasih event ke router untuk push ke 
+    function handleSearchChange(event: any) {
+        const value = event.target.value
+        console.log(value)
+        setSearchQuery(value)
+    }
+
+    // Buat fungsi untuk submit
+    function searchButtonOnClick() {
+        router.push(`/?search=${searchQuery}`)
+
+    }
+    // Query ke supabase, semuanya dijoin buat filter tree dropdown
+    // !inner untuk inner join
+    async function getSearchStatutories() {
+        console.log(`Haloooo`)
+        const { data: statutories, error } = await supabase
+            .from('statutories')
+            .select(`*,
+            statutory_categories!inner(*),
+            statutory_attachments!inner(*),
+            chapters!inner(
+                *,
+                paragraphs!inner(*)
+            )
+            `)
+            .order('id', { foreignTable: 'chapters', ascending: true })
+            .or(`chapter_title.ilike.%${searchEngine}%`, {foreignTable:'chapters'})
+        if (!statutories) {
+            return
+        }
+        setStatutories(statutories as any)
+    }
+    React.useEffect(() => {
+        if (searchEngine) {
+            getSearchStatutories()
+        }
+    }, [searchEngine])
     // KODE YANG BAKALAN DITAMPILIN
+    // Buat konstanta untuk posisi search dipake
     return (
         <div className={styles.bodyContainer}>
             <div className={styles.bodyLeft}>
                 <div className={styles.bodyLeftTop}>
                     <div className={styles.bodySearchBar}>
-                        <input type="text" placeholder="Search Peraturan" className={styles.searchBar} name="searchBar"></input>
-                        <button className={styles.buttonSearch}>Search</button>
+                        <input type="text" placeholder="Search Peraturan" className={styles.searchBar} name="searchBar" onChange={handleSearchChange}></input>
+                        <button className={styles.buttonSearch} onClick={searchButtonOnClick}>Search</button>
                     </div>
                 </div>
+
+
                 <div className={styles.bodyLeftBottom}>
 
-                    <details className={`${styles.treeNav} ${styles.isExpandable}`}>
-                        <summary className={styles.treeNavTitle}>Undang-Undang</summary>
 
-                        {statutories.map((statutory) => {
-                            return (<details className={`${styles.treeNav} ${styles.isExpandable}`} key={statutory.id}>
-                                <summary className={styles.treeNavTitle}>{statutory.statutory_title}</summary>
+                    {/* BIKIN Conditional  */}
+                    <div>
+                            
+                            <details className={`${styles.treeNav} ${styles.isExpandable}`}>
+                                <summary className={styles.treeNavTitle}>Undang-Undang</summary>
 
-
-                                {/* BAB 1 */}
-                                {statutory.chapters.map((chapter: any) => {
-                                    return <details className={`${styles.treeNav} ${styles.isExpandable}`} key={chapter.id}>
-                                        <summary className={styles.treeNavTitle} onClick={() => router.push(`/?peraturan=${chapter.slug}`)}>{chapter.chapter_title}</summary>
+                                {statutories.map((statutory) => {
+                                    return (<details className={`${styles.treeNav} ${styles.isExpandable}`} key={statutory.id}>
+                                        <summary className={styles.treeNavTitle} onClick={() => router.push(`/?judul=${statutory.slug}`)}>{statutory.statutory_title}</summary>
 
 
-                                        <>
-                                            <div className={styles.treeNavTitleDiv}>
+                                        {/* BAB 1 */}
+                                        {statutory.chapters.map((chapter: any) => {
+                                            return <details className={`${styles.treeNav} ${styles.isExpandable}`} key={chapter.id}>
+                                                <summary className={styles.treeNavTitle} onClick={() => router.push(`/?peraturan=${chapter.slug}`)}>{chapter.chapter_title}</summary>
 
-                                                {chapter.paragraphs.map((paragraph: any) => {
 
-                                                    return (
-                                                        <Link className={styles.treeNavTitleDivList} href={`/?bagian=${paragraph.slug}`} key={paragraph.id}>{paragraph.paragraph_title}</Link>
-                                                    )
-                                                })}
-                                            </div></>
-                                    </details>
+                                                <>
+                                                    <div className={styles.treeNavTitleDiv}>
+
+                                                        {chapter.paragraphs.map((paragraph: any) => {
+
+                                                            return (
+                                                                <Link className={styles.treeNavTitleDivList} href={`/?bagian=${paragraph.slug}`} key={paragraph.id}>{paragraph.paragraph_title}</Link>
+                                                            )
+                                                        })}
+                                                    </div></>
+                                            </details>
+                                        })}
+
+                                    </details>)
                                 })}
-
-                            </details>)
-                        })}
-                    </details>
+                            </details>
+                    </div>
                 </div>
+
             </div>
             <div className={styles.bodyRight}>
                 <div className={styles.bodyRightTop}>
                     <h4>{
-                        bagian ? paragraphContent[0]?.chapters.chapter_title : peraturan ? chapterContent[0]?.chapter_title : `Homepage`
+                        judul ? statutoryContent[0]?.statutory_title : bagian ? paragraphContent[0]?.chapters.chapter_title : peraturan ? chapterContent[0]?.chapter_title : `Homepage`
                     }</h4>
                 </div>
                 <div className={styles.bodyRightBottom}>
+                    {/* TAMBAHIN YANG BAB */}
+
+
 
                     {
                         <div>
-                            {keduanyaNull ? (
+                            {ketiganyaNull ? (
                                 // Render Component1 when both values are null
                                 <div>Selamat Datang
                                 </div>
@@ -140,11 +213,11 @@ export default function Body() {
                                     <div
                                         dangerouslySetInnerHTML={{
                                             __html:
-                                                bagian ? paragraphContent[0]?.paragraph_content : peraturan ? chapterContent[0]?.chapter_content : null
+                                                judul ? statutoryContent[0]?.statutory_content : bagian ? paragraphContent[0]?.paragraph_content : peraturan ? chapterContent[0]?.chapter_content : null
                                         }}
                                     />
-                                    <p><Link href={`/?peraturan=${paragraphContent[0]?.chapters.slug}`}>
-                                        Kembali ke {bagian ? paragraphContent[0]?.chapters.chapter_title : peraturan ? chapterContent[0]?.chapter_title : null}
+                                    <p><Link href={`/?{peraturan}=${paragraphContent[0]?.chapters.slug}`}>
+                                        Kembali ke {bagian ? paragraphContent[0]?.chapters.chapter_title : peraturan ? chapterContent[0]?.statutory_title : null}
                                     </Link></p>
                                 </>)}
                         </div>
@@ -154,3 +227,4 @@ export default function Body() {
         </div>
     )
 }
+
