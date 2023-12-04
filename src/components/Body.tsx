@@ -34,7 +34,8 @@ export default function Body() {
                 paragraphs(*)
             )
             `)
-            .order('id', { foreignTable: 'chapters', ascending: true })
+            .order('slug', { foreignTable: 'chapters',  ascending: true })
+            .order('slug', { foreignTable: 'chapters.paragraphs',  ascending: true })
         if (!statutories) {
             return
         }
@@ -48,6 +49,7 @@ export default function Body() {
 
 
     // ambil isi dari bagian
+    
     const [paragraphContent, setParagraphContent] = useState<any[]>([])
     async function getParagraphContent() {
         const { data: paragraphs, error } = await supabase
@@ -57,10 +59,11 @@ export default function Body() {
             `)
             // filter
             .eq('slug', bagian)
-
+            
         if (!paragraphs) {
             return
         }
+        console.log(paragraphs)
         setParagraphContent(paragraphs as any)
     }
     React.useEffect(() => { getParagraphContent() }, [bagian])
@@ -70,15 +73,19 @@ export default function Body() {
     async function getChapterContent() {
         const { data: chapters, error } = await supabase
             .from('chapters')
-            .select("*")
+            .select(`*`)
+
             // filter
             .eq('slug', peraturan)
+            
         if (!chapters) {
             return
         }
+        console.log(chapters)
         setChapterContent(chapters as any)
     }
     React.useEffect(() => { getChapterContent() }, [peraturan])
+    
 
 
     // Ambil isi dari Judul Peraturan (Bab 1, 2, dst)
@@ -114,7 +121,6 @@ export default function Body() {
     // Query ke supabase, semuanya dijoin buat filter tree dropdown
     // !inner untuk inner join
     async function getSearchStatutories() {
-        console.log(`Haloooo`)
         const { data: statutories, error } = await supabase
             .from('statutories')
             .select(`*,
@@ -139,6 +145,8 @@ export default function Body() {
     }, [searchEngine])
     // KODE YANG BAKALAN DITAMPILIN
     // Buat konstanta untuk posisi search dipake
+    
+    
     return (
         <div className={styles.bodyContainer}>
             <div className={styles.bodyLeft}>
@@ -153,20 +161,17 @@ export default function Body() {
                 <div className={styles.bodyLeftBottom}>
 
 
-                    {/* BIKIN Conditional  */}
+                    {/* UNDANG UNDANG  */}
                     <div>
-                            
-                            <details className={`${styles.treeNav} ${styles.isExpandable}`}>
-                                <summary className={styles.treeNavTitle}>Undang-Undang</summary>
 
                                 {statutories.map((statutory) => {
-                                    return (<details className={`${styles.treeNav} ${styles.isExpandable}`} key={statutory.id}>
+                                    return (<details className={`${styles.treeNav} ${styles.isExpandable}`} key={statutory.slug}>
                                         <summary className={styles.treeNavTitle} onClick={() => router.push(`/?judul=${statutory.slug}`)}>{statutory.statutory_title}</summary>
 
 
                                         {/* BAB 1 */}
                                         {statutory.chapters.map((chapter: any) => {
-                                            return <details className={`${styles.treeNav} ${styles.isExpandable}`} key={chapter.id}>
+                                            return <details className={`${styles.treeNav} ${styles.isExpandable}`} key={chapter.slug}>
                                                 <summary className={styles.treeNavTitle} onClick={() => router.push(`/?peraturan=${chapter.slug}`)}>{chapter.chapter_title}</summary>
 
 
@@ -176,7 +181,7 @@ export default function Body() {
                                                         {chapter.paragraphs.map((paragraph: any) => {
 
                                                             return (
-                                                                <Link className={styles.treeNavTitleDivList} href={`/?bagian=${paragraph.slug}`} key={paragraph.id}>{paragraph.paragraph_title}</Link>
+                                                                <Link className={styles.treeNavTitleDivList} href={`/?bagian=${paragraph.slug}`} key={paragraph.slug}>{paragraph.paragraph_title}</Link>
                                                             )
                                                         })}
                                                     </div></>
@@ -185,7 +190,8 @@ export default function Body() {
 
                                     </details>)
                                 })}
-                            </details>
+                            
+        
                     </div>
                 </div>
 
@@ -216,8 +222,8 @@ export default function Body() {
                                                 judul ? statutoryContent[0]?.statutory_content : bagian ? paragraphContent[0]?.paragraph_content : peraturan ? chapterContent[0]?.chapter_content : null
                                         }}
                                     />
-                                    <p><Link href={`/?{peraturan}=${paragraphContent[0]?.chapters.slug}`}>
-                                        Kembali ke {bagian ? paragraphContent[0]?.chapters.chapter_title : peraturan ? chapterContent[0]?.statutory_title : null}
+                                    <p><Link href={`/?peraturan=${paragraphContent[0]?.chapters.slug}`}>
+                                        Kembali {bagian ? paragraphContent[0]?.chapters.chapter_title : peraturan ? chapterContent[0]?.statutory_title : null}
                                     </Link></p>
                                 </>)}
                         </div>
@@ -226,5 +232,5 @@ export default function Body() {
             </div>
         </div>
     )
+   
 }
-

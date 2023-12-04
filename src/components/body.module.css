@@ -1,25 +1,29 @@
 .bodyContainer{
     display: flex;
     width: 100%;
-    height: 100%;
+    min-height: 100vh;
+    height: auto;
+    padding-top: 40px;
 }
 
 .bodyLeft{
+    display: flexbox;
     width: 35vw;
-    display: flex;
-    border-right: solid 4px black;
-    height: 100%;
-    flex-direction: column;
+    height: auto;
     gap: 4px;
+    min-height: 100%;
+    position: fixed;
 }
 
 .bodyRight{
+    margin-left: 35vw;
     width: 65vw;
     display: flex;
+    align-items: start;   
+    border-left: solid 4px black;
 }
 
 .bodyLeftTop{
-
     display: flex;
     width: 100%;
     justify-content: flex-start;
@@ -36,6 +40,8 @@
 
 .bodyLeftBottom{
     padding: 4px;
+    max-width: 30vw;
+    position: relative;
 }
 
 .treeNav{
@@ -43,11 +49,12 @@
     white-space: nowrap;
     color: black;
     position: relative;
+    
 }
 
 .treeNav.isExpandable::before{
     border-left:  1px solid #333;
-    content: "";;
+    content: "";
     height: 100%;
     position: absolute;
 }
@@ -91,9 +98,12 @@
     display: flex;
     width: 100%;
     padding: 4px;
+    position: fixed;
+    background: white;
 }
 
 .bodyRightBottom{
+    padding-top: 20px;
     margin: 4px;
     padding-left: 4px;
     text-align: justify;
@@ -101,3 +111,4 @@
     flex-direction: column;
     line-height: 1.5;
 }
+
