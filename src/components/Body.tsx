@@ -10,6 +10,9 @@ import { useRouter } from "next/navigation";
 
 export default function Body() {
   const [statutories, setStatutories] = useState<any[]>([]);
+  const [openStatutory, setOpenStatutory] = useState<string[]>([]);
+  const [openChapter, setOpenChapter] = useState<string[]>([]);
+
   const searchParam = useSearchParams();
   const supabase = createClientComponentClient();
   const bagian = searchParam.get("bagian");
@@ -128,23 +131,13 @@ export default function Body() {
   }
   // Query ke supabase, semuanya dijoin buat filter tree dropdown
   // !inner untuk inner join
-  async function getSearchStatutories() {
-    // const { data: statutories, error } = await supabase
-    //     .from('statutories')
-    //     .select(`*,
-    //     statutory_categories!inner(*),
-    //     statutory_attachments!inner(*),
-    //     chapters!inner(
-    //         *,
-    //         paragraphs!inner(*)
-    //     )
-    //     `)
-    //     .order('id', { foreignTable: 'chapters', ascending: true })
-    //     .or(`chapter_title.ilike.%${searchEngine}%`, {foreignTable:'chapters'})
-    // if (!statutories) {
-    //     return
-    // }
 
+  /**
+   * Retrieves search statutories based on the provided search engine text.
+   * @returns {Promise<void>} A promise that resolves when the search statutories are retrieved.
+   */
+  async function getSearchStatutories() {
+    // Retrieve statutories based on search engine text
     const { data: statutories, error } = await supabase.rpc("search_words", {
       input_text: searchEngine,
     });
@@ -154,16 +147,17 @@ export default function Body() {
       throw error;
     }
 
+    // Extract paragraph IDs from statutories
     const paragraphsIds = statutories.map(
       (statutory: any) => statutory.paragraph_id
     );
 
+    // Extract chapter IDs from statutories and remove duplicates
     const chaptersIds = statutories
       .map((statutory: any, index: number) => {
         if (index === 0) {
           return statutory.chapter_id;
         } else if (statutory.chapter_id !== statutories[index - 1].chapter_id) {
-          // Remove duplicates
           return statutory.chapter_id;
         }
       })
@@ -172,17 +166,18 @@ export default function Body() {
     console.log("paragraphsIds: \n", paragraphsIds.join(", "));
     console.log("chapterIds: \n", chaptersIds.join(", "));
 
+    // Retrieve statutories with related data
     const { data: statutories2, error: error2 } = await supabase
       .from("statutories")
       .select(
         `*,
-        statutory_categories(*),
-        statutory_attachments(*),
-        chapters!inner(
-            *,
-            paragraphs!inner(*)
-        )
-        `
+            statutory_categories(*),
+            statutory_attachments(*),
+            chapters!inner(
+                    *,
+                    paragraphs!inner(*)
+            )
+            `
       )
       .in("chapters.paragraphs.id", paragraphsIds);
 
@@ -191,10 +186,25 @@ export default function Body() {
       throw error2;
     }
 
+    // Get all statuory slugs
+    const statutoriesSlugs = statutories2.map(
+      (statutory: any) => statutory.slug
+    );
+
+    // Get all chapter slugs
+    const chaptersSlugs = statutories2.map((statutory: any) =>
+      statutory.chapters.map((chapter: any) => chapter.slug)
+    );
+
+    // Open all statutories and chapters
+    setOpenStatutory(statutoriesSlugs);
+    setOpenChapter(chaptersSlugs.flat());
+
     setStatutories(statutories2 as any);
   }
 
-  console.log("hasil search: ", searchEngine, statutories);
+  console.log("open statutories: \n", openStatutory);
+  console.log("open chapters: \n", openChapter);
 
   React.useEffect(() => {
     if (searchEngine) {
@@ -213,14 +223,27 @@ export default function Body() {
               type="text"
               placeholder="Search Peraturan"
               className={styles.searchBar}
+              value={searchQuery}
               name="searchBar"
               onChange={handleSearchChange}
-            ></input>
+            />
             <button
               className={styles.buttonSearch}
               onClick={searchButtonOnClick}
             >
               Search
+            </button>
+            <button
+              className={styles.buttonSearch}
+              onClick={() => {
+                router.push("/");
+                getStatutories();
+                setOpenStatutory([]);
+                setOpenChapter([]);
+                setSearchQuery("");
+              }}
+            >
+              Reset
             </button>
           </div>
         </div>
@@ -228,56 +251,62 @@ export default function Body() {
         <div className={styles.bodyLeftBottom}>
           {/* UNDANG UNDANG  */}
           <div>
-            {statutories.map((statutory) => {
-              return (
-                <details
-                  className={`${styles.treeNav} ${styles.isExpandable}`}
-                  key={statutory.slug}
-                >
-                  <summary
-                    className={styles.treeNavTitle}
-                    onClick={() => router.push(`/?judul=${statutory.slug}`)}
+            {statutories.length === 0 ? (
+              <span style={{ textAlign: "center" }}>Loading....</span>
+            ) : (
+              statutories.map((statutory) => {
+                return (
+                  <details
+                    className={`${styles.treeNav} ${styles.isExpandable}`}
+                    key={statutory.slug}
+                    open={openStatutory.includes(statutory.slug)}
                   >
-                    {statutory.statutory_title}
-                  </summary>
+                    <summary
+                      className={styles.treeNavTitle}
+                      onClick={() => router.push(`/?judul=${statutory.slug}`)}
+                    >
+                      {statutory.statutory_title}
+                    </summary>
 
-                  {/* BAB 1 */}
-                  {statutory.chapters.map((chapter: any) => {
-                    return (
-                      <details
-                        className={`${styles.treeNav} ${styles.isExpandable}`}
-                        key={chapter.slug}
-                      >
-                        <summary
-                          className={styles.treeNavTitle}
-                          onClick={() =>
-                            router.push(`/?peraturan=${chapter.slug}`)
-                          }
+                    {/* BAB 1 */}
+                    {statutory.chapters.map((chapter: any) => {
+                      return (
+                        <details
+                          className={`${styles.treeNav} ${styles.isExpandable}`}
+                          key={chapter.slug}
+                          open={openChapter.includes(chapter.slug)}
                         >
-                          {chapter.chapter_title}
-                        </summary>
+                          <summary
+                            className={styles.treeNavTitle}
+                            onClick={() =>
+                              router.push(`/?peraturan=${chapter.slug}`)
+                            }
+                          >
+                            {chapter.chapter_title}
+                          </summary>
 
-                        <>
-                          <div className={styles.treeNavTitleDiv}>
-                            {chapter.paragraphs.map((paragraph: any) => {
-                              return (
-                                <Link
-                                  className={styles.treeNavTitleDivList}
-                                  href={`/?bagian=${paragraph.slug}`}
-                                  key={paragraph.slug}
-                                >
-                                  {paragraph.paragraph_title}
-                                </Link>
-                              );
-                            })}
-                          </div>
-                        </>
-                      </details>
-                    );
-                  })}
-                </details>
-              );
-            })}
+                          <>
+                            <div className={styles.treeNavTitleDiv}>
+                              {chapter.paragraphs.map((paragraph: any) => {
+                                return (
+                                  <Link
+                                    className={styles.treeNavTitleDivList}
+                                    href={`/?bagian=${paragraph.slug}`}
+                                    key={paragraph.slug}
+                                  >
+                                    {paragraph.paragraph_title}
+                                  </Link>
+                                );
+                              })}
+                            </div>
+                          </>
+                        </details>
+                      );
+                    })}
+                  </details>
+                );
+              })
+            )}
           </div>
         </div>
       </div>
