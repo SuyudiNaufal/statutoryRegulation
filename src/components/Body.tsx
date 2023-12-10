@@ -275,7 +275,7 @@ export default function Body() {
                 <span
                   style={{ textAlign: "center", fontSize: 12, marginTop: 16 }}
                 >
-                  No results found for "{searchEngine}"
+                  No results found for &ldquo;{searchEngine}&ldquo;
                 </span>
               ) : (
                 <span style={{ textAlign: "center" }}>Loading....</span>
