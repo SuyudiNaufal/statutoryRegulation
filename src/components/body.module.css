@@ -3,24 +3,29 @@
     width: 100%;
     min-height: 100vh;
     height: auto;
-    padding-top: 40px;
 }
 
 .bodyLeft{
-    display: flexbox;
+    display: flex;
+    flex-direction: column;
     width: 35vw;
     height: auto;
     gap: 4px;
+    /* padding-top: 42px; */
     min-height: 100%;
-    position: fixed;
+    overflow-y: auto;
+    max-height: 100vh;
+    position: relative;
+    max-height: calc(100vh - 42px);
 }
 
 .bodyRight{
-    margin-left: 35vw;
     width: 65vw;
     display: flex;
-    align-items: start;   
+    align-items: flex-start;   
     border-left: solid 4px black;
+    overflow-y: auto;
+    max-height: calc(100vh - 42px);
 }
 
 .bodyLeftTop{
@@ -28,6 +33,10 @@
     width: 100%;
     justify-content: flex-start;
     flex-direction: column;
+    position: sticky;
+    background-color: #fff;
+    z-index: 50;
+    top: 0;
 }
 
 .bodySearchBar{
@@ -46,8 +55,8 @@
 
 .treeNav{
     display: block;
-    white-space: nowrap;
     color: black;
+    line-height: 1.5;
     position: relative;
     
 }
@@ -98,7 +107,6 @@
     display: flex;
     width: 100%;
     padding: 4px;
-    position: fixed;
     background: white;
 }
 
