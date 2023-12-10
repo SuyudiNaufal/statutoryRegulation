@@ -82,7 +82,7 @@ export default function Body() {
   async function getChapterContent() {
     const { data: chapters, error } = await supabase
       .from("chapters")
-      .select(`*`)
+      .select(`*, statutories(*)`)
 
       // filter
       .eq("slug", peraturan);
@@ -200,11 +200,30 @@ export default function Body() {
     setOpenStatutory(statutoriesSlugs);
     setOpenChapter(chaptersSlugs.flat());
 
+    const splittedSearchQuery = searchQuery.split(" ");
+
+    // Add mark to innerHTML words
+    // statutories2.forEach((statutory: any) => {
+    //   statutory.chapters.forEach((chapter: any) => {
+    //     chapter.paragraphs.forEach((paragraph: any) => {
+    //       splittedSearchQuery.forEach((word: string) => {
+    //         paragraph.paragraph_content = paragraph.paragraph_content.replace(
+    //           word.toLowerCase(),
+    //           ` <mark>${word}</mark> `
+    //         );
+    //       });
+    //     });
+    //   });
+    // });
+
+    // console.log(statutories2)
+
+    router.push(
+      `/?search=${searchEngine}&bagian=${statutories2[0].chapters[0].paragraphs[0].slug}`
+    );
+
     setStatutories(statutories2 as any);
   }
-
-  console.log("open statutories: \n", openStatutory);
-  console.log("open chapters: \n", openChapter);
 
   React.useEffect(() => {
     if (searchEngine) {
@@ -252,7 +271,15 @@ export default function Body() {
           {/* UNDANG UNDANG  */}
           <div>
             {statutories.length === 0 ? (
-              <span style={{ textAlign: "center" }}>Loading....</span>
+              searchEngine ? (
+                <span
+                  style={{ textAlign: "center", fontSize: 12, marginTop: 16 }}
+                >
+                  No results found for "{searchEngine}"
+                </span>
+              ) : (
+                <span style={{ textAlign: "center" }}>Loading....</span>
+              )
             ) : (
               statutories.map((statutory) => {
                 return (
@@ -346,7 +373,13 @@ export default function Body() {
                   />
                   <p>
                     <Link
-                      href={`/?peraturan=${paragraphContent[0]?.chapters.slug}`}
+                      href={
+                        bagian
+                          ? `/?peraturan=${paragraphContent[0].chapters.slug}`
+                          : peraturan
+                          ? `/?judul=${chapterContent[0]?.statutories?.slug}`
+                          : `/`
+                      }
                     >
                       Kembali{" "}
                       {bagian
