@@ -219,7 +219,7 @@ export default function Body() {
     // console.log(statutories2)
 
     router.push(
-      `/?search=${searchEngine}&bagian=${statutories2[0].chapters[0].paragraphs[0].slug}`
+      `/?search=${searchEngine}&bagian=${statutories2[0]?.chapters[0].paragraphs[0].slug}`
     );
 
     setStatutories(statutories2 as any);
@@ -296,7 +296,7 @@ export default function Body() {
                     </summary>
 
                     {/* BAB 1 */}
-                    {statutory.chapters.map((chapter: any) => {
+                    {statutory?.chapters.map((chapter: any) => {
                       return (
                         <details
                           className={`${styles.treeNav} ${styles.isExpandable}`}
@@ -375,7 +375,7 @@ export default function Body() {
                     <Link
                       href={
                         bagian
-                          ? `/?peraturan=${paragraphContent[0].chapters.slug}`
+                          ? `/?peraturan=${paragraphContent[0]?.chapters.slug}`
                           : peraturan
                           ? `/?judul=${chapterContent[0]?.statutories?.slug}`
                           : `/`
