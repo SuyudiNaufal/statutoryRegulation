@@ -175,11 +175,11 @@ export default function Body() {
             statutory_attachments(*),
             chapters!inner(
                     *,
-                    paragraphs!inner(*)
+                    paragraphs(*)
             )
             `
       )
-      .in("chapters.paragraphs.id", paragraphsIds);
+      .in("chapters.id", chaptersIds);
 
     if (error2) {
       console.log(error2);
@@ -191,16 +191,93 @@ export default function Body() {
       (statutory: any) => statutory.slug
     );
 
+    const keywords = searchEngine?.split(" ");
+
+    function searchObjectValue(obj: any) {
+      const hasKeyword = Object.entries(obj).map(([key, value]) => {
+        if (typeof value === "string") {
+          return keywords?.filter((keyword) =>
+            value.toLowerCase().includes(keyword.toLowerCase())
+          );
+        }
+      });
+
+      const hasKeyword2 = hasKeyword.filter(
+        (keyword) => keyword !== undefined && keyword.length > 0
+      );
+
+      if (hasKeyword2.length > 0) {
+        return obj;
+      }
+    }
+
+    const withKeywords = statutories2.map((statutory: any) => {
+      const chapters = statutory.chapters.map((chapter: any) => {
+        const paragraphs = chapter.paragraphs
+          .map((paragraph: any) => {
+            return { obj: searchObjectValue(paragraph), type: "paragraph" };
+          })
+          .filter((paragraph: any) => paragraph.obj);
+
+        return [
+          {
+            obj: searchObjectValue(chapter),
+            type: "chapter",
+          },
+          ...paragraphs,
+        ];
+      });
+
+      return [
+        {
+          obj: searchObjectValue(statutory),
+          type: "statutory",
+        },
+        ...chapters.flat(),
+      ];
+    });
+
+    const withKeywords2 = withKeywords.flat().filter((obj) => obj.obj);
+
+    console.log("found keyword", withKeywords2);
+
     // Get all chapter slugs
     const chaptersSlugs = statutories2.map((statutory: any) =>
       statutory.chapters.map((chapter: any) => chapter.slug)
     );
 
     // Open all statutories and chapters
-    setOpenStatutory(statutoriesSlugs);
-    setOpenChapter(chaptersSlugs.flat());
 
-    const splittedSearchQuery = searchQuery.split(" ");
+    const chaptersWithKeywords = withKeywords2
+      .filter((obj) => obj.type === "chapter")
+      .map((obj) => obj.obj.slug);
+
+    const paragraphsWithKeywords = withKeywords2
+      .filter((obj) => obj.type === "paragraph")
+      .map((obj) => obj.obj.slug);
+
+    const statutoryToOpen = chaptersWithKeywords.map((chapterSlug) => {
+      const statutory = statutories2.find((statutory) =>
+        statutory.chapters.find((chapter: any) => chapter.slug === chapterSlug)
+      );
+
+      return statutory?.slug;
+    });
+
+    const chapterToOpen = paragraphsWithKeywords.map((paragraphSlug) => {
+      const chapter = statutories2.find((statutory) =>
+        statutory.chapters.find((chapter: any) =>
+          chapter.paragraphs.find(
+            (paragraph: any) => paragraph.slug === paragraphSlug
+          )
+        )
+      );
+
+      return chapter?.slug;
+    });
+
+    setOpenStatutory(statutoryToOpen);
+    setOpenChapter(chapterToOpen);
 
     // Add mark to innerHTML words
     // statutories2.forEach((statutory: any) => {
@@ -218,9 +295,20 @@ export default function Body() {
 
     // console.log(statutories2)
 
-    router.push(
-      `/?search=${searchEngine}&bagian=${statutories2[0]?.chapters[0].paragraphs[0].slug}`
-    );
+    const contentToShow = withKeywords2.map((obj) => {
+      switch (obj.type) {
+        case "paragraph":
+          return "&bagian=" + obj.obj.slug;
+        case "chapter":
+          return "&peraturan=" + obj.obj.slug;
+        case "statutory":
+          return "&judul=" + obj.obj.slug;
+      }
+    });
+
+    if (contentToShow.length > 0) {
+      router.push(`/?search=${searchEngine}${contentToShow[0]}`);
+    }
 
     setStatutories(statutories2 as any);
   }
@@ -337,6 +425,15 @@ export default function Body() {
           </div>
         </div>
       </div>
+
+      {/* 
+      
+       BAGIAN KANAN
+            ||
+            \/ 
+      
+      */}
+
       <div className={styles.bodyRight}>
         <div className={styles.bodyRightTop}>
           <h4>
