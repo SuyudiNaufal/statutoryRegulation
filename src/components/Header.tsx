@@ -8,10 +8,7 @@ const Header = () => {
             <div className={styles.headerLogo}>
                 <a href="/" className={styles.headerLogoLink}>Home Page</a>
             </div>
-            <div className={styles.headerMenu}>
-                <div>
-                </div>
-            </div>
+            <div></div>
         </div>
     );
 };
