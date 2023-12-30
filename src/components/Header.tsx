@@ -9,9 +9,7 @@ const Header = () => {
                 <a href="/" className={styles.headerLogoLink}>Home Page</a>
             </div>
             <div className={styles.headerMenu}>
-                <div className={styles.headerSubMenu}>
-                    <button type='button' className={styles.headerRegister}>Register</button>
-                    <button type='button' className={styles.headerLogin}>Login</button>
+                <div>
                 </div>
             </div>
         </div>
